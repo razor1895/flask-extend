@@ -378,6 +378,198 @@ $ python run.py
 ├── tmp
 
 
+5 表单
+
+接下来，我们将要接触表单方面的内容。flask原生提供的表单处理，也比较简单。当然，有了轮子，我们就直接用好了。需要安装一个 
+Flask-WTF==0.9.4。
+
+安装完之后，打开 （/app/forms.py）
+
+# -*- coding: utf-8 -*-
+import re
+from flask_wtf import Form
+from flask_wtf.html5 import EmailField
+from wtforms import TextField, PasswordField, BooleanField
+from wtforms.validators import DataRequired, ValidationError
+from models import User
+from hashlib import md5
+
+
+class RegisterFrom(Form):
+    nickname = TextField('nickname', validators=[DataRequired()])
+    email = EmailField('email', validators=[DataRequired()])
+    password = PasswordField('password', validators=[DataRequired()])
+    conform = PasswordField('conform', validators=[DataRequired()])
+
+
+    def validate_nickname(self, field):
+        nickname = field.data.strip()
+        if len(nickname) < 3 or len(nickname) > 20:
+            raise ValidationError('nickname must be 3 letter at least')
+        elif not re.search(r'^\w+$', nickname):
+            raise ValidationError('User names can contain only alphanumeric characters and underscores.')
+        else:
+            # 验证是否已经注册
+            u = User.query.filter_by(nickname=nickname).first()
+            if u:
+                raise ValidationError('The nickname already exists')
+
+    def validate_email(self, field):
+        email = field.data.strip()
+        email  = User.query.filter_by(email=email).first()
+        if email:
+            raise ValidationError('The email already exists')
+
+    def validate_password(self, field):
+        password = field.data.strip()
+        if len(password) < 6:
+            raise ValidationError('password must be 3 letter at least')
+
+    def validate_conform(self, field):
+        conform = field.data.strip()
+        if self.data['password'] != conform:
+            raise ValidationError('the password and conform are different')
+
+上述代码定义了一个 RegisterFrom  class，正好是一个表单，class的字段映射为表单的域。其中 wtforms 中有 TextField, PasswordField, BooleanField这些表单类型，flask_wtf.html5 中 EmailField 则是 html5 规范的。
+
+表单有 form.validate_on_submit() 方法，这个方法执行之前会验证表单域。验证方法和django类似，都是 validate_field 的方法。其中一个参数 field正好是表单的value值 需要注意验证两次密码是否相同的时候，需要用到 self.data 。这是一个字典，包含了表单域的name和value
+
+6 用户注册
+
+打开（/app/views.py）添加注册方法。
+
+@app.route('/account/signup', methods=['GET', 'POST'])
+def signup():
+
+    form = RegisterFrom()
+    if request.method == 'POST':
+        if form.validate_on_submit():
+            psdmd5 = md5(form.data['password'])
+            password = psdmd5.hexdigest()
+            u = User(nickname=form.data['nickname'], email=form.data['email'], password=password)
+            try:
+                db.session.add(u)
+                db.session.commit()
+                flash('signup successful')
+            except Exception, e:
+                return 'something goes wrong'
+            return redirect(url_for('signin'))
+    return render_template('signup.html', form=form)
+
+
+7 用户登录
+先添加一个用户登录的表单，打开 (/app/forms.py)
+
+class LoginForm(Form):
+    nickname = TextField('nickname', validators=[DataRequired()])
+    password = PasswordField('password', validators=[DataRequired()])
+    remember_me = BooleanField('remember_me', default=False)
+
+    def validate_nickname(self, field):
+        nickname = field.data.strip()
+        if len(nickname) < 3 or len(nickname) > 20:
+            raise ValidationError('nickname must be 3 letter at least')
+        elif not re.search(r'^\w+$', nickname):
+            raise ValidationError('User names can contain only alphanumeric characters and underscores.')
+        else:
+            return nickname
+
+用户登录，最简单的方法就是 验证用户名，如果通过，则添加 session，登出的时候，清除session即可，模版里面可以直接使用 request.session用来判断用户登录状态
+打开(/app/views.py) 添加登录登出方法
+
+@app.route('/account/signin', methods=['GET', 'POST'])
+def signin():
+    form = LoginForm()
+    if request.method == 'POST':
+        if form.validate_on_submit():
+            nickname = form.data['nickname']
+            psdmd5 = md5(form.data['password'])
+            password = psdmd5.hexdigest()
+            u = User.query.filter_by(nickname=nickname, password=password).first()
+            if u:
+                session['signin'] = True
+                flash('signin successful')
+                return redirect(url_for('index'))
+            else:
+                flash(u'用户名或者密码错误')
+
+    return render_template('signin.html', form=form)
+
+@app.route('/account/signout')
+def signout():   
+    session.pop('signin', None)
+    flash('signout successful')
+    return redirect('index')
+注意，我们使用 flask 的时候，用了中文，就必须是 unicode 。
+
+除了原生的登录方式，我们还可以用flask-login。安装flask-login
+
+此时需要初始化一个 login_manager 对象，打开 （/app/__init__.py）
+
+# -*- coding: utf-8 -*-
+
+import os
+from flask import Flask
+from flask.ext.sqlalchemy import SQLAlchemy
+from flask.ext.login import LoginManager
+from config import basedir
+
+app = Flask(__name__)
+
+app.config.from_object('config')
+
+db = SQLAlchemy(app)                                                   # 初始化数据库管理对象
+login_manager = LoginManager()                                         # 初始化登录管理对象 
+login_manager.init_app(app)
+login_manager.login_view = "signin"                                    # 登录跳转视图
+login_manager.login_message = u"Bonvolu ensaluti por uzi tio paĝo."    # 登录跳转视图前的输出消息
+
+# from app import views, models
+import views, models
+
+然后打开 （/app/views.py）
+添加下面方法， 注释掉之前的 登入登出方法
+
+from flask.ext.login import login_user, logout_user, current_user, login_required
+from app import app, db, login_manager
+
+
+@login_manager.user_loader
+def load_user(userid):
+    return User.query.get(userid)
+
+@app.route('/account/signin', methods=['GET', 'POST'])
+def signin():
+    form = LoginForm()
+    if request.method == 'POST':
+        if form.validate_on_submit():
+            nickname = form.data['nickname']
+            psdmd5 = md5(form.data['password'])
+            password = psdmd5.hexdigest()
+            remember_me = form.data['remember_me']
+            user = User.query.filter_by(nickname=nickname, password=password).first()
+            if user:
+                login_user(user, remember = remember_me)
+                flash('signin successful')
+                return redirect(request.args.get("next") or url_for("index"))
+            else:
+                flash(u'用户名或者密码错误')
+
+    return render_template('signin.html', form=form)
+
+@app.route('/account/signout')
+@login_required
+def signout():   
+    logout_user()
+    flash('signout successful')
+    return redirect('index')
+
+8 数据表关系，一对多和多对多
+
+
+
+
+
 代码下载： https://github.com/rsj217/flask-extend/tree/master/project
 
 
