@@ -1,0 +1,397 @@
+flask 不仅简介小巧，同时运用的时候十分灵活。下面简单介绍一下如何编写一个 flask项目。涉及调用开发服务器，数据库连接以及 ORM 映射，还有数据库的迁移，模板使用。后期再完善会话，管理后台，缓存等。
+
+一 安装环境
+我们使用 flask web框架，并用 sqlalchemy来做数据库映射，并使用 migrate做数据迁移。
+
+$ pip install flask
+$ pip install SQLAlchemy==0.7.9
+$ pip install flask-sqlalchemy
+$ pip install flask-migrate
+
+二 建立项目
+
+flask 没有 django 那样原生的 manage管理工具（flask-admin可以实现，日后再说）。因此我们需要手动建立目录。新建一个 myproject目录，在里面建 app tmp两个文件夹，然后在 app文件夹里面建立 static， templates 两个文件夹，用来存储静态文件和模板。最后目录结构如下：
+
+.
+├── app
+│   ├── static
+│   ├── templates
+└── tmp
+
+三 初始化文件
+
+建立一些文件，在 app文件里建立 __init__.py models.py views.py 然后在与app 同目录下建立 config.py 和 run.py 此时的目录结构如下：
+
+(env)ghost@ghost-H61M-S2V-B3:~/project/python/flask/project$ tree
+.
+├── app
+│   ├── static
+│   ├── templates
+│   ├── __init__.py
+│   ├── models.py
+│   ├── views.py
+├── config.py
+├── run.py
+└── tmp
+
+四 开始项目
+
+1 hello wrod
+
+打开 （/app/__init.py） 文件，写入
+
+# -*- coding: utf-8 -*-
+
+from flask import Flask        # 引入 flask 
+
+app = Flask(__name__)          # 实例化一个flask 对象
+
+import views                   # 导入 views 模块
+# from app import views
+
+注意，我们的 app 文件夹其实是一个python包，from app import views 这句话也就是从 包app里面导入 views模块，所以写成注释的那句话也没错，其他代码实践喜欢写成后面那种
+
+现在我们来开始写我们的视图，打开 （/app/views.py）
+
+# -*- coding: utf-8 -*-
+
+from app import app
+from models import User, Post, ROLE_USER, ROLE_ADMIN
+
+
+@app.route('/')
+def index():
+    return 'hello world, hello flask'
+    
+
+下一步我们将要启动我们的开发服务器，打开 （/run.py）
+
+# -*- coding: utf-8 -*-
+
+from app import app          
+
+if __name__ == '__main__':
+    app.debug = True           # 设置调试模式，生产模式的时候要关掉debug
+    app.run()                  # 启动服务器
+
+这段代码需要注意第一句 from app import app。也许会有疑问，我们的 app 包里，貌似没有 app.py 这样的模块。其实这是 flask 方式和python的导入方式。from app 指导入 app 包里的 __iniy__.py 所以这句话的含义是导入 __.init__.py 里面的 app实例。
+
+打开shell 运行 
+
+$ python run.py
+
+(env)ghost@ghost-H61M-S2V-B3:~/project/python/flask/project$ python run.py 
+ * Running on http://127.0.0.1:5000/
+ * Restarting with reloader
+
+用浏览器打开 http://127.0.0.1:5000/  将会看到一个输入 hello world 的页面
+
+
+2 连接数据库
+
+下面开始连接数据库引擎 先要做一个简单的配置 打开 （/config.py）
+
+# -*- coding: utf-8 -*-
+
+import os
+basedir = os.path.abspath(os.path.dirname(__file__))
+
+SQLALCHEMY_DATABASE_URI = 'sqlite:///%s' % os.path.join(basedir, 'app.db')
+SQLALCHEMY_MIGRATE_REPO = os.path.join(basedir, 'db_repository')
+
+CSRF_ENABLED = True
+SECRET_KEY = 'you-will-never-guess'
+
+SQLALCHEMY_DATABASE_URI是the Flask-SQLAlchemy必需的扩展。这是我们的数据库文件的路径。
+SQLALCHEMY_MIGRATE_REPO 是用来存储SQLAlchemy-migrate数据库文件的文件夹。
+
+然后打开 （/app/__init__.py）
+
+# -*- coding: utf-8 -*-
+
+import os
+from flask import Flask
+from flask.ext.sqlalchemy import SQLAlchemy
+from config import basedir
+
+app = Flask(__name__)
+
+app.config.from_object('config')   # 载入配置文件
+
+db = SQLAlchemy(app)               # 初始化 db 对象
+
+# from app import views, models    # 引用视图和模型
+import views, models
+
+打开 （/app/models.py）
+
+# -*- coding: utf-8 -*-
+
+from app import db
+
+ROLE_USER = 0
+ROLE_ADMIN = 1
+
+class User(db.Model):
+
+    id = db.Column(db.Integer, primary_key=True)
+    nickname=db.Column(db.String(60), index=True, unique=True)
+    email = db.Column(db.String(120), index=True, unique=True)
+    role = db.Column(db.SmallInteger, default=ROLE_USER)
+
+    def __repr__(self):
+        return '<User %r>' % self.nickname
+
+
+我们的模型建立了一个 user类，正好是 数据库里面的 user 表，表有四个字段
+
+现在我们的数据库配置已经好了，可是还没有建立数据库。新建一个文件 (/db_create.py)
+
+# -*- coding: utf-8 -*-
+
+from migrate.versioning import api
+from config import SQLALCHEMY_DATABASE_URI
+from config import SQLALCHEMY_MIGRATE_REPO
+from app import db
+import os.path
+
+db.create_all()
+
+if not os.path.exists(SQLALCHEMY_MIGRATE_REPO):
+    api.create(SQLALCHEMY_MIGRATE_REPO, 'database repository')
+    api.version_control(SQLALCHEMY_DATABASE_URI, SQLALCHEMY_MIGRATE_REPO)
+else:
+    api.version_control(SQLALCHEMY_DATABASE_URI, SQLALCHEMY_MIGRATE_REPO, api.version(SQLALCHEMY_MIGRATE_REPO))
+    
+
+这个脚本是完全通用的，所有的应用路径名都是从配置文件读取的。当你用在自己的项目时，你可以把脚本拷贝到你的项目目录下就能正常使用了。
+
+打开shell 运行 
+$ python db_create_db
+
+运行这条命令之后，你就创建了一个新的app.db文件。这是个支持迁移的空sqlite数据库，同时也会生成一个带有几个文件的db_repository目录，这是SQLAlchemy-migrate存储数据库文件的地方，注意如果数据库已存在它就不会再重新生成了。这将帮助我们在丢失了现有的数据库后，再次自动创建出来。
+
+运行 
+slqite3 app.db
+>>> .tables
+>>> user
+
+或者使用 sqlite 图形化客户端，没有需要安装 （windows 下直接下载安装包即可）
+
+$ sudo apt-get install sqlitebrowser 
+
+3 数据库迁移
+
+每当我们更改了 models 。等价于更改了数据库的表结构，这个时候，需要数据库同步。新建  (/db_mirgate.py)
+
+# -*- coding: utf-8 -*-
+
+import imp
+from migrate.versioning import api
+from app import db
+from config import SQLALCHEMY_DATABASE_URI
+from config import SQLALCHEMY_MIGRATE_REPO
+
+migration = SQLALCHEMY_MIGRATE_REPO + '/versions/%03d_migration.py' % (api.db_version(SQLALCHEMY_DATABASE_URI, SQLALCHEMY_MIGRATE_REPO) + 1)
+tmp_module = imp.new_module('old_model')
+old_model = api.create_model(SQLALCHEMY_DATABASE_URI, SQLALCHEMY_MIGRATE_REPO)
+
+exec old_model in tmp_module.__dict__
+script = api.make_update_script_for_model(SQLALCHEMY_DATABASE_URI, SQLALCHEMY_MIGRATE_REPO, tmp_module.meta, db.metadata)
+
+open(migration, "wt").write(script)
+api.upgrade(SQLALCHEMY_DATABASE_URI, SQLALCHEMY_MIGRATE_REPO)
+
+print 'New migration saved as ' + migration
+print 'Current database version: ' + str(api.db_version(SQLALCHEMY_DATABASE_URI, SQLALCHEMY_MIGRATE_REPO))
+
+这个脚本看起来很复杂，SQLAlchemy-migrate通过对比数据库的结构（从app.db文件读取）和models结构（从app/models.py文件读取）的方式来创建迁移任务，两者之间的差异将作为一个迁移脚本记录在迁移库中，迁移脚本知道如何应用或者撤销一次迁移，所以它可以方便的升级或者降级一个数据库的格式。
+
+开始数据库迁移
+
+$ python db_mirgate.py
+
+New migration saved as db_repository/versions/001_migration.py  Current database version: 1
+
+相应的，我们继续创建数据库 升级和回退的脚本
+
+(/db_upgrade)
+
+# -*- coding: utf-8 -*-
+
+from migrate.versioning import api
+from config import SQLALCHEMY_DATABASE_URI
+from config import SQLALCHEMY_MIGRATE_REPO
+
+api.upgrade(SQLALCHEMY_DATABASE_URI, SQLALCHEMY_MIGRATE_REPO)
+
+print 'Current database version: ' + str(api.db_version(SQLALCHEMY_DATABASE_URI, SQLALCHEMY_MIGRATE_REPO))
+
+(/db_downgrade.py)
+
+# -*- coding: utf-8 -*-
+
+from migrate.versioning import api
+from config import SQLALCHEMY_DATABASE_URI
+from config import SQLALCHEMY_MIGRATE_REPO
+
+v = api.db_version(SQLALCHEMY_DATABASE_URI, SQLALCHEMY_MIGRATE_REPO)
+api.downgrade(SQLALCHEMY_DATABASE_URI, SQLALCHEMY_MIGRATE_REPO, v - 1)
+
+print 'Current database version: ' + str(api.db_version(SQLALCHEMY_DATABASE_URI, SQLALCHEMY_MIGRATE_REPO))
+
+
+4 操作数据库
+
+接下来，我们定义一个新的models class 并做第二次迁移归并
+
+打开（/app/models.py）
+
+# -*- coding: utf-8 -*-
+
+from app import db
+
+ROLE_USER = 0
+ROLE_ADMIN = 1
+
+class User(db.Model):
+
+    id = db.Column(db.Integer, primary_key=True)
+    nickname=db.Column(db.String(60), index=True, unique=True)
+    email = db.Column(db.String(120), index=True, unique=True)
+    role = db.Column(db.SmallInteger, default=ROLE_USER)
+    posts = db.relationship('Post', backref = 'author', lazy = 'dynamic')
+
+
+    def __repr__(self):
+        return '<User %r>' % self.nickname
+
+class Post(db.Model):
+
+    id = db.Column(db.Integer, primary_key=True)
+    body = db.Column(db.String(140))
+    timestamp = db.Column(db.DateTime)
+    user_id = db.Column(db.Integer, db.ForeignKey('user.id'))
+
+    def __repr__(self):
+        return '<Post %r>' % (self.body)
+
+这里我们进行了两个class 的关联。
+
+$ python db_mirgrate.py
+
+New migration saved as db_repository/versions/002_migration.py  Current database version: 2
+
+打开 （/app/views.py）
+
+# -*- coding: utf-8 -*-
+
+from flask import render_template, flash, redirect, session, url_for, request, g
+from app import app, db
+from models import User, Post, ROLE_USER, ROLE_ADMIN
+
+
+@app.route('/')
+def index():
+    return render_template('index.html')
+
+
+@app.route('/adduser/<nickname>/<email>')
+def adduser(nickname, email):
+    u = User(nickname=nickname, email=email)
+    try:
+        db.session.add(u)
+        db.session.commit()
+        return 'add successful'
+    except Exception, e:
+        return 'something go wrong'
+    
+@app.route('/getuser/<nickname>')
+def getuser(nickname):
+    user = User.query.filter_by(nickname=nickname).first()
+
+    return render_template('user.html', user=user)
+
+
+这次我们使用了模板， 新建(/app/templates/user.html)
+
+<html>
+<head>
+    <title>user</title>
+</head>
+<body>
+    <h1>user</h1>
+    <ul>
+        <li>user: {{ user.nickname }}</li>
+        <li>email: {{ user.email }}</li>
+    </ul>
+</body>
+</html>
+
+最后运行 
+$ python run.py
+
+用浏览器访问 http://127.0.0.1:5000/adduser/username/useremail
+
+最后还可以用 sqlite 客户端打开查看我们的数据库变换。关于更多的数据库操作方法，请阅读 sqlalchemy文档。
+
+最后我们的代码目录结构如下：
+
+(env)ghost@ghost-H61M-S2V-B3:~/project/python/flask/project$ tree
+.
+├── app
+│   ├── __init__.py
+│   ├── __init__.pyc
+│   ├── models.py
+│   ├── models.pyc
+│   ├── static
+│   ├── templates
+│   │   ├── 404.html
+│   │   ├── 500.html
+│   │   ├── index.html
+│   │   └── user.html
+│   ├── views.py
+│   └── views.pyc
+├── app.db
+├── config.py
+├── config.pyc
+├── db_create.py
+├── db_downgrade.py
+├── db_migrate.py
+├── db_repository
+│   ├── __init__.py
+│   ├── __init__.pyc
+│   ├── manage.py
+│   ├── migrate.cfg
+│   ├── README
+│   └── versions
+│       ├── 001_migration.py
+│       ├── 001_migration.pyc
+│       ├── 002_migration.py
+│       ├── 002_migration.pyc
+│       ├── __init__.py
+│       └── __init__.pyc
+├── db_upgrade.py
+├── requirements.txt
+├── run.py
+├── tmp
+
+
+代码下载： https://github.com/rsj217
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
