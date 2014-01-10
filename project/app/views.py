@@ -1,11 +1,14 @@
 # -*- coding: utf-8 -*-
 
 from flask import render_template, flash, redirect, session, url_for, request, g
-from app import app, db
+from flask.ext.login import login_user, logout_user, current_user, login_required
+from app import app, db, login_manager
 from models import User, Post, ROLE_USER, ROLE_ADMIN
-
+from forms import RegisterFrom, LoginForm
+from hashlib import md5
 
 @app.route('/')
+@app.route('/index')
 def index():
     return render_template('index.html')
 
@@ -19,9 +22,93 @@ def adduser(nickname, email):
         return 'add successful'
     except Exception, e:
         return 'something go wrong'
-    
+
+
 @app.route('/getuser/<nickname>')
 def getuser(nickname):
     user = User.query.filter_by(nickname=nickname).first()
-
     return render_template('user.html', user=user)
+
+
+@app.errorhandler(404)
+def internal_error(error):
+    return render_template('404.html'), 404
+
+
+@app.errorhandler(500)
+def internal_error(error):
+    db.session.rollback()
+    return render_template('500.html'), 500
+
+@app.route('/account/signup', methods=['GET', 'POST'])
+def signup():
+
+    form = RegisterFrom()
+    if request.method == 'POST':
+        if form.validate_on_submit():
+            psdmd5 = md5(form.data['password'])
+            password = psdmd5.hexdigest()
+            u = User(nickname=form.data['nickname'], email=form.data['email'], password=password)
+            try:
+                db.session.add(u)
+                db.session.commit()
+                flash('signup successful')
+            except Exception, e:
+                return 'something goes wrong'
+            return redirect(url_for('signin'))
+    return render_template('signup.html', form=form)
+
+@login_manager.user_loader
+def load_user(userid):
+    return User.query.get(userid)
+
+@app.route('/account/signin', methods=['GET', 'POST'])
+def signin():
+    form = LoginForm()
+    if request.method == 'POST':
+        if form.validate_on_submit():
+            nickname = form.data['nickname']
+            psdmd5 = md5(form.data['password'])
+            password = psdmd5.hexdigest()
+            remember_me = form.data['remember_me']
+            user = User.query.filter_by(nickname=nickname, password=password).first()
+            if user:
+                login_user(user, remember = remember_me)
+                flash('signin successful')
+                return redirect(request.args.get("next") or url_for("index"))
+            else:
+                flash(u'用户名或者密码错误')
+
+    return render_template('signin.html', form=form)
+
+@app.route('/account/signout')
+@login_required
+def signout():   
+    logout_user()
+    flash('signout successful')
+    return redirect('index')
+
+# @app.route('/account/signin', methods=['GET', 'POST'])
+# def signin():
+#     form = LoginForm()
+#     if request.method == 'POST':
+#         if form.validate_on_submit():
+#             nickname = form.data['nickname']
+#             psdmd5 = md5(form.data['password'])
+#             password = psdmd5.hexdigest()
+#             u = User.query.filter_by(nickname=nickname, password=password).first()
+#             if u:
+#                 session['signin'] = True
+#                 flash('signin successful')
+#                 return redirect(url_for('index'))
+#             else:
+#                 flash(u'用户名或者密码错误')
+
+#     return render_template('signin.html', form=form)
+
+# @app.route('/account/signout')
+# def signout():   
+#     session.pop('signin', None)
+#     flash('signout successful')
+#     return redirect('index')
+

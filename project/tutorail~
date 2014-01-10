@@ -337,9 +337,39 @@ $ python run.py
 
 最后我们的代码目录结构如下：
 
+(env)ghost@ghost-H61M-S2V-B3:~/project/python/flask/project$ tree
+.
+├── app
+│   ├── __init__.py
+│   ├── models.py
+│   ├── static
+│   ├── templates
+│   │   ├── 404.html
+│   │   ├── 500.html
+│   │   ├── index.html
+│   │   └── user.html
+│   ├── views.py
+├── app.db
+├── config.py
+├── db_create.py
+├── db_downgrade.py
+├── db_migrate.py
+├── db_repository
+│   ├── __init__.py
+│   ├── manage.py
+│   ├── migrate.cfg
+│   ├── README
+│   └── versions
+│       ├── 001_migration.py
+│       ├── 002_migration.py
+│       ├── __init__.py
+├── db_upgrade.py
+├── requirements.txt
+├── run.py
+├── tmp
 
 
-
+代码下载： https://github.com/rsj217/flask-extend/tree/master/project
 
 
 

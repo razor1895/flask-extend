@@ -1,0 +1,16 @@
+<!-- extend base layout -->
+{% extends "base.html" %}
+
+{% block content %}
+  <form method="POST" action=''>
+    {{ form.hidden_tag() }}
+    <p>{{ form.nickname.label }} {{ form.nickname(size=20) }}</p>
+    <p>{{ form.password.label }} {{ form.password(size=20) }}</p>
+    <p>{{ form.remember_me.label }} {{ form.remember_me }}</p>
+
+    <input type="submit" value="Sign Up">
+    <input type="reset" value="Reset">
+  </form>
+  {{ form.errors }}
+{% endblock %}
+
