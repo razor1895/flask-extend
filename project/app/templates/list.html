@@ -4,7 +4,7 @@
 {% block content %}
   <h1>{{ category.name }}</h1>
   <ul class=entries>
-  {% for post in posts %}
+  {% for post in posts.items %}
     <li>
       <h2><a href="{{ url_for('detail', id=post.id) }}">{{ post.title }}</a></h2>
       <span>
@@ -28,4 +28,8 @@
     <li><em>Unbelievable.  No entries here so far</em></li>
   {% endfor %}
   </ul>
+
+  {% import 'macros.html' as paginate %}
+  {{ paginate.render_pagination(posts, 'index') }}
+  
 {% endblock %}

@@ -23,13 +23,14 @@ def index(page=1):
     return render_template('index.html', posts=posts, categories=categories)
 
 @app.route('/list/<name>')
-def list(name):
+@app.route('/list/<name>/<int:page>', methods = ['GET', 'POST'])
+def list(name, page=1):
     categories = Category.query.filter().all()
     for i in categories:
         if i.name == name:
             category = i
             break 
-    posts = Post.query.filter_by(category=category).order_by(Post.pub_date.desc()).all()
+    posts = Post.query.filter_by(category=category).order_by(Post.pub_date.desc()).paginate(page, POSTS_PER_PAGE, False)
     return render_template('list.html', categories=categories, category=category, posts=posts)
 
 
@@ -51,9 +52,18 @@ def post():
             title = form.data['title']
             body = form.data['body']
             category = form.data['category']
-            tags = form.data['tag']
+            tags = form.data['tag'].split()
             category = Category.query.filter_by(name=category).first()
-            taglist = [Tag(content=tag) for tag in tags.split()]
+            taglist = []
+            for tag in tags:
+                print tag
+                tagrecord = Tag.query.filter_by(content=tag).first()
+                if not tagrecord:
+                    taglist.append(Tag(content=tag))
+                else:
+                    taglist.append(tagrecord)
+
+            print taglist
             try:
                 pass
                 post = Post(title=title, body=body, category=category, user=current_user,tags=taglist)
@@ -73,7 +83,8 @@ def tags():
     return render_template('tags.html', tags=tags)
 
 @app.route('/post/<tag>/<tagid>')
-def post_by_tag(tag, tagid):
+@app.route('/post/<tag>/<tagid>/<int:page>', methods=['GET', 'POST'])
+def post_by_tag(tag, tagid, page=1):
 
     tag = Tag.query.filter_by(id=tagid).first()
     posts = tag.posts

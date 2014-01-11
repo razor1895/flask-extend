@@ -13,7 +13,7 @@
         tags:
         {% if post.tags %}
           {% for tag in post.tags %}
-          <em><a href="">{{ tag.content }}</a></em>
+          <em><a href="{{ url_for('post_by_tag', tag=tag.content, tagid=tag.id) }}">{{ tag.content }}</a></em>
           {% endfor %}
         {% else %}
           None
