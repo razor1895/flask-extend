@@ -46,10 +46,10 @@ def post():
             category = form.data['category']
             tags = form.data['tag']
             category = Category.query.filter_by(name=category).first()
-            taglist = Tag(content=tags)
+            taglist = [Tag(content=tag) for tag in tags.split()]
             try:
                 pass
-                post = Post(title=title, body=body, category=category, user=current_user,tags=[taglist])
+                post = Post(title=title, body=body, category=category, user=current_user,tags=taglist)
                 db.session.add(post)
                 db.session.commit()
                 flash('post successful')
