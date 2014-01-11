@@ -1,0 +1,13 @@
+<!-- extend base layout -->
+{% extends "base.html" %}
+
+{% block content %}
+  <h1>hello flask</h1>
+  <ul class=entries>
+  {% for user in users %}
+    <li>
+      <h2><a href="{{ url_for('home', nickname=user.nickname) }}">{{ user.nickname }}</a></h2>
+    </li>
+  {% endfor %}
+  </ul>
+{% endblock %}

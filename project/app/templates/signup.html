@@ -2,6 +2,13 @@
 {% extends "base.html" %}
 
 {% block content %}
+  <h2>sign up</h2>
+  {% if form.errors %}
+    <p class=error><strong>Error:</strong> 
+    {% for key, value in form.errors.items()  %}
+      {{ key }}:{{ value[0] }}<br/>
+    {% endfor %}
+  {% endif %}
   <form method="POST" action=''>
     {{ form.hidden_tag() }}
     <p>{{ form.nickname.label }} {{ form.nickname(size=20) }}</p>
@@ -11,7 +18,5 @@
     <input type="submit" value="Sign Up">
     <input type="reset" value="Reset">
   </form>
-
-  {{ form.errors }}
 {% endblock %}
 

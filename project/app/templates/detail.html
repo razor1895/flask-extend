@@ -4,9 +4,9 @@
 {% block content %}
   <h1>hello flask</h1>
   <ul class=entries>
-  {% for post in posts %}
+  {% if post %}
     <li>
-      <h2><a href="{{ url_for('detail', id=post.id) }}">{{ post.title }}</a></h2>
+      <h2>{{ post.title }}</h2>
       <span>
         author:{{ post.user.nickname }}<br />
         pubdate:{{ post.pub_date }}<br />
@@ -22,10 +22,10 @@
       <div>
         {{ post.body|safe }}
       </div>
-      <a href="{{ url_for('detail', id=post.id) }}">More...</a>
+      
     </li>
   {% else %}
-    <li><em>Unbelievable.  No entries here so far</em></li>
-  {% endfor %}
+    <li><em>Unbelievable.  No post here so far</em></li>
+  {% endif %}
   </ul>
 {% endblock %}

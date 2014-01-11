@@ -55,3 +55,33 @@ class LoginForm(Form):
             raise ValidationError('User names can contain only alphanumeric characters and underscores.')
         else:
             return nickname
+
+
+class PostForm(Form):
+    title = TextField('title', validators=[DataRequired()])
+    body = TextField('body', validators=[DataRequired()])
+    tag = TextField('tag')
+
+    def validate_title(self, field):
+        title = field.data.strip()
+        if len(title) < 5 or len(title) > 80:
+            raise ValidationError('title must be 3 letter at least')
+        elif not re.search(r'^\w+$', title):
+            raise ValidationError('title can contain only alphanumeric characters and underscores.')
+        else:
+            return title
+    def validate_body(self, field):
+        body = field.data.strip()
+        if len(body) < 10:
+            raise ValidationError('body must be 3 letter at least')
+        else:
+            return body
+
+    def validators_tag(self, field):
+        tags = field.data.strip()   
+        tagslist = tags.split()
+
+        if len(tagslist) > 4:
+            raise ValidationError('最多只能添加四个标签！')
+        else:
+            return ' '.join(tagslist)

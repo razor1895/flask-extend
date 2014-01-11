@@ -30,9 +30,9 @@ class User(db.Model):
         return '<User %r>' % self.nickname
 
 tag_post = db.Table('tag_post',
-                db.Column('tag_id', db.Integer, db.ForeignKey('tag.id')),
-                db.Column('post_id', db.Integer, db.ForeignKey('post.id')),
-                )
+                    db.Column('tag_id', db.Integer, db.ForeignKey('tag.id')),
+                    db.Column('post_id', db.Integer, db.ForeignKey('post.id')),
+                    )
 
 
 class Tag(db.Model):
@@ -40,7 +40,7 @@ class Tag(db.Model):
     content = db.Column(db.String(100))
 
     posts = db.relationship('Post', secondary=tag_post,
-                                   backref=db.backref('posts', lazy='dynamic'))
+                            backref=db.backref('posts', lazy='dynamic'))
 
     def __init__(self, content):
         self.content = content
@@ -60,16 +60,21 @@ class Post(db.Model):
     category = db.relationship(
         'Category', backref=db.backref('posts', lazy='dynamic'))
 
+    user_id = db.Column(db.Integer, db.ForeignKey('user.id'))
+    user = db.relationship(
+        'User', backref=db.backref('users', lazy='dynamic'))
+
     tags = db.relationship('Tag', secondary=tag_post,
                            backref=db.backref('tags', lazy='dynamic'))
 
-    def __init__(self, title, body, category, tags, pub_date=None):
+    def __init__(self, title, body, category, user, tags=[None], pub_date=None):
         self.title = title
         self.body = body
         if pub_date is None:
             pub_date = datetime.utcnow()
         self.pub_date = pub_date
         self.category = category
+        self.user = user
         self.tags = tags
 
     def __repr__(self):

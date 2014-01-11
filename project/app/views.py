@@ -3,15 +3,36 @@
 from flask import render_template, flash, redirect, session, url_for, request, g
 from flask.ext.login import login_user, logout_user, current_user, login_required
 from app import app, db, login_manager
-from models import User, Post, ROLE_USER, ROLE_ADMIN
+from models import User, Post, Category, ROLE_USER, ROLE_ADMIN
 from forms import RegisterFrom, LoginForm
 from hashlib import md5
 
-@app.route('/')
-@app.route('/index')
-def index():
-    return render_template('index.html')
 
+@app.route('/')
+@app.route('/index/')
+def index():
+
+    categories = Category.query.all()
+    posts = Post.query.order_by(Post.pub_date.desc()).all()
+    return render_template('index.html', posts=posts, categories=categories)
+
+@app.route('/list/<name>')
+def list(name):
+    categories = Category.query.filter().all()
+    for i in categories:
+        if i.name == name:
+            category = i
+            break 
+    posts = Post.query.filter_by(category=category).order_by(Post.pub_date.desc()).all()
+    return render_template('list.html', categories=categories, category=category, posts=posts)
+
+
+@app.route('/detail/<id>')
+def detail(id):
+
+    categories = Category.query.filter().all()
+    post = Post.query.filter_by(id=id).first()
+    return render_template('detail.html', categories=categories, post=post)
 
 @app.route('/adduser/<nickname>/<email>')
 def adduser(nickname, email):
@@ -40,6 +61,7 @@ def internal_error(error):
     db.session.rollback()
     return render_template('500.html'), 500
 
+
 @app.route('/account/signup', methods=['GET', 'POST'])
 def signup():
 
@@ -48,7 +70,8 @@ def signup():
         if form.validate_on_submit():
             psdmd5 = md5(form.data['password'])
             password = psdmd5.hexdigest()
-            u = User(nickname=form.data['nickname'], email=form.data['email'], password=password)
+            u = User(nickname=form.data['nickname'],
+                     email=form.data['email'], password=password)
             try:
                 db.session.add(u)
                 db.session.commit()
@@ -58,9 +81,11 @@ def signup():
             return redirect(url_for('signin'))
     return render_template('signup.html', form=form)
 
+
 @login_manager.user_loader
 def load_user(userid):
     return User.query.get(userid)
+
 
 @app.route('/account/signin', methods=['GET', 'POST'])
 def signin():
@@ -71,9 +96,10 @@ def signin():
             psdmd5 = md5(form.data['password'])
             password = psdmd5.hexdigest()
             remember_me = form.data['remember_me']
-            user = User.query.filter_by(nickname=nickname, password=password).first()
+            user = User.query.filter_by(
+                nickname=nickname, password=password).first()
             if user:
-                login_user(user, remember = remember_me)
+                login_user(user, remember=remember_me)
                 flash('signin successful')
                 return redirect(request.args.get("next") or url_for("index"))
             else:
@@ -81,9 +107,10 @@ def signin():
 
     return render_template('signin.html', form=form)
 
+
 @app.route('/account/signout')
 @login_required
-def signout():   
+def signout():
     logout_user()
     flash('signout successful')
     return redirect('index')
@@ -107,8 +134,7 @@ def signout():
 #     return render_template('signin.html', form=form)
 
 # @app.route('/account/signout')
-# def signout():   
+# def signout():
 #     session.pop('signin', None)
 #     flash('signout successful')
 #     return redirect('index')
-
