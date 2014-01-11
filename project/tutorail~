@@ -779,7 +779,8 @@ TypeError: Incompatible collection type: Tag is not list-like
 
 注意 p = Post(title='test tag', body='hope to success', category=c, tags=t) tags如果直接填写 tags=t 会报错 ：Incompatible collection type: Tag is not list-like。因此需要改成 
 Post(title='test tag', body='hope to success', category=c, tags=[t])
-这样就把 Tag 和 Post 关联起来了
+
+
 
 
 
