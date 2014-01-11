@@ -4,7 +4,7 @@ from flask import render_template, flash, redirect, session, url_for, request, g
 from flask.ext.login import login_user, logout_user, current_user, login_required
 from app import app, db, login_manager
 from models import User, Post, Category, ROLE_USER, ROLE_ADMIN
-from forms import RegisterFrom, LoginForm
+from forms import RegisterFrom, LoginForm, PostForm
 from hashlib import md5
 
 
@@ -33,6 +33,30 @@ def detail(id):
     categories = Category.query.filter().all()
     post = Post.query.filter_by(id=id).first()
     return render_template('detail.html', categories=categories, post=post)
+
+
+@app.route('/post', methods=['GET', 'POST'])
+def post():
+
+    form = PostForm()
+    if request.method == 'POST':
+        if form.validate_on_submit():
+            title = form.data['title']
+            body = form.data['body']
+            category = form.data['category']
+            tags = form.data['tag']
+            category = Category.query.filter_by(name=category).first()
+            
+            try:
+                post = Post(title=title, body=body, category=category, user=current_user)
+                db.session.add(post)
+                db.session.commit()
+                flash('post successful')
+                return redirect(url_for('index'))
+            except Exception, e:
+                flash('something goes wrong')    
+    return render_template('post.html', form=form)
+
 
 @app.route('/adduser/<nickname>/<email>')
 def adduser(nickname, email):
@@ -77,7 +101,7 @@ def signup():
                 db.session.commit()
                 flash('signup successful')
             except Exception, e:
-                return 'something goes wrong'
+                return flash('something goes wrong')
             return redirect(url_for('signin'))
     return render_template('signup.html', form=form)
 

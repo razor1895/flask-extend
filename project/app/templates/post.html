@@ -11,11 +11,11 @@
   {% endif %}
   <form method="POST" action=''>
     {{ form.hidden_tag() }}
-    <p>{{ form.nickname.label }} {{ form.nickname(size=20) }}</p>
-    <p>{{ form.password.label }} {{ form.password(size=20) }}</p>
-    <p>{{ form.remember_me.label }} {{ form.remember_me }}</p>
-
-    <input type="submit" value="Sign Up">
+    <p>{{ form.title.label }} {{ form.title(size=20) }}</p>
+    <p>{{ form.body.label }} {{ form.body(rows=5, cols=40) }}</p>
+    <p>{{ form.category.label }} {{ form.category }}</p>
+    <p>{{ form.tag.label }} {{ form.tag }}</p>
+    <input type="submit" value="Post">
     <input type="reset" value="Reset">
   </form>
 {% endblock %}
