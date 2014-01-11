@@ -36,6 +36,7 @@ def detail(id):
 
 
 @app.route('/post', methods=['GET', 'POST'])
+@login_required
 def post():
 
     form = PostForm()
@@ -57,6 +58,20 @@ def post():
             except Exception, e:
                 flash('something goes wrong')    
     return render_template('post.html', form=form)
+
+@app.route('/tags')
+def tags():
+
+    tags = Tag.query.all()
+
+    return render_template('tags.html', tags=tags)
+
+@app.route('/post/<tag>/<tagid>')
+def post_by_tag(tag, tagid):
+
+    tag = Tag.query.filter_by(id=tagid).first()
+    posts = tag.posts
+    return render_template('post_by_tag.html', posts=posts)
 
 
 @app.route('/adduser/<nickname>/<email>')

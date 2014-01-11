@@ -1,0 +1,11 @@
+<!-- extend base layout -->
+{% extends "base.html" %}
+
+{% block content %}
+  <h1>tags</h1>
+  <ul class=entries>
+  {% for tag in tags %}
+  	<li><a href="{{ url_for('post_by_tag', tag=tag.content, tagid=tag.id) }}">{{ tag.content }}</a></li>
+  {% endfor %}
+  </ul>
+{% endblock %}
