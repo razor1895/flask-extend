@@ -3,7 +3,7 @@
 from flask import render_template, flash, redirect, session, url_for, request, g
 from flask.ext.login import login_user, logout_user, current_user, login_required
 from app import app, db, login_manager
-from models import User, Post, Category, ROLE_USER, ROLE_ADMIN
+from models import User, Post, Category, Tag, ROLE_USER, ROLE_ADMIN
 from forms import RegisterFrom, LoginForm, PostForm
 from hashlib import md5
 
@@ -46,9 +46,10 @@ def post():
             category = form.data['category']
             tags = form.data['tag']
             category = Category.query.filter_by(name=category).first()
-            
+            taglist = Tag(content=tags)
             try:
-                post = Post(title=title, body=body, category=category, user=current_user)
+                pass
+                post = Post(title=title, body=body, category=category, user=current_user,tags=[taglist])
                 db.session.add(post)
                 db.session.commit()
                 flash('post successful')

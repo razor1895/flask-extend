@@ -19,6 +19,7 @@
           {% if current_user.is_authenticated() %}
             {% if current_user and current_user.role == 1%}
             <a href="{{ url_for('signout') }}">admin</a>  
+            <a href="{{ url_for('post') }}">post</a>  
             {% endif %}
             <a href="{{ url_for('signout') }}">signout</a>
           {% else %}
