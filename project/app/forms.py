@@ -77,9 +77,6 @@ class PostForm(Form):
         title = field.data.strip()
         if len(title) < 5 or len(title) > 80:
             raise ValidationError('title must be 3 letter at least')
-        elif not re.search(r'^\w+$', title):
-            raise ValidationError(
-                'title can contain only alphanumeric characters and underscores.')
         else:
             return title
 
