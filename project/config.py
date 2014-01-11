@@ -10,4 +10,4 @@ CSRF_ENABLED = True
 SECRET_KEY = 'you-will-never-guess'
 
 # pagination
-POSTS_PER_PAGE = 3
+POSTS_PER_PAGE = 1

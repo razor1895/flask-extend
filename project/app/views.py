@@ -16,6 +16,7 @@ from config import POSTS_PER_PAGE
 def index(page=1):
 
     categories = Category.query.all()
+
     # posts = Post.query.order_by(Post.pub_date.desc()).all()
     # posts = Post.query.order_by(Post.pub_date.desc()).paginate(page, POSTS_PER_PAGE, False).items
     posts = Post.query.order_by(Post.pub_date.desc()).paginate(page, POSTS_PER_PAGE, False)
