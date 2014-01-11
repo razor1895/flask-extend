@@ -6,14 +6,19 @@ from app import app, db, login_manager
 from models import User, Post, Category, Tag, ROLE_USER, ROLE_ADMIN
 from forms import RegisterFrom, LoginForm, PostForm
 from hashlib import md5
+from config import POSTS_PER_PAGE
+
 
 
 @app.route('/')
-@app.route('/index/')
-def index():
+@app.route('/index')
+@app.route('/index/<int:page>', methods = ['GET', 'POST'])
+def index(page=1):
 
     categories = Category.query.all()
-    posts = Post.query.order_by(Post.pub_date.desc()).all()
+    # posts = Post.query.order_by(Post.pub_date.desc()).all()
+    # posts = Post.query.order_by(Post.pub_date.desc()).paginate(page, POSTS_PER_PAGE, False).items
+    posts = Post.query.order_by(Post.pub_date.desc()).paginate(page, POSTS_PER_PAGE, False)
     return render_template('index.html', posts=posts, categories=categories)
 
 @app.route('/list/<name>')

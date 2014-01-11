@@ -4,7 +4,7 @@
 {% block content %}
   <h1>hello flask</h1>
   <ul class=entries>
-  {% for post in posts %}
+  {% for post in posts.items %}
     <li>
       <h2><a href="{{ url_for('detail', id=post.id) }}">{{ post.title }}</a></h2>
       <span>
@@ -28,4 +28,16 @@
     <li><em>Unbelievable.  No entries here so far</em></li>
   {% endfor %}
   </ul>
+
+  {% if posts.has_prev %}
+    <a href="{{ url_for('index', page = posts.prev_num) }}"> << Newer posts</a>
+  {% else %}
+    << Newer posts
+  {% endif %} |
+  
+  {% if posts.has_next %}
+    <a href="{{ url_for('index', page = posts.next_num) }}">Older posts >></a>
+  {% else %}
+  Older posts >>
+  {% endif %}
 {% endblock %}
