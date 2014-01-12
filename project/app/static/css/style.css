@@ -1,0 +1,53 @@
+
+
+
+body            { font-family: 'Georgia' sans-serif; background: #eee; }
+a, h1, h2       { color: #377BA8; } 	
+ul li           {list-style: none;}
+
+.flash          { background: #CEE5F5; padding: 0.5em;
+                  border: 1px solid #AACBE2; }
+.error          { background: #F0D6D6; padding: 0.5em; }
+
+.clear{clear: both;}
+
+
+#container{
+	width: 1000px;
+	margin: 0 auto;
+}
+
+header{
+	height: 170px;
+}
+#siteinfo{
+	height: 100px;
+	z-index: 99999;
+}
+#sitetitle{
+	display: inline;
+	float: left;
+}
+#sitesetting{
+	float: right;
+	margin: 50px 65px;
+}
+.navbar{
+	z-index: 0;
+}
+
+.posttitle{
+
+}
+.managepost{
+	float: right;
+	font-size: 18px;
+}
+.managepost em a{
+	color:#999;
+}
+.pagination{
+	margin: 0 auto;
+	display: block;
+	text-align: center;
+}

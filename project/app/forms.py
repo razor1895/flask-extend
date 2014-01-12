@@ -69,7 +69,7 @@ def get_category():
 
 class PostForm(Form):
     title = TextField('title', validators=[DataRequired()])
-    body = TextAreaField('body', validators=[DataRequired()])
+    body = TextAreaField('body',default="please add content", validators=[DataRequired()])
     category = SelectField('category', choices=get_category(), validators=[DataRequired()])
     tag = TextField('tag')
 

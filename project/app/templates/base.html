@@ -7,44 +7,70 @@
     {% else %}
     <title>microblog</title>
     {% endif %}
-    <link rel=stylesheet type=text/css href="{{ url_for('static', filename='reset.css') }}">
-    <link rel=stylesheet type=text/css href="{{ url_for('static', filename='style.css') }}">
+    <!-- Loading Bootstrap -->
+    <link href="{{ url_for('static', filename='bootstrap/css/bootstrap.css') }}" rel="stylesheet">
+
+    <!-- Loading Flat UI -->
+    <link href="{{ url_for('static', filename='css/flat-ui.css') }}" rel="stylesheet">
+
+    <link rel="shortcut icon" href="{{ url_for('static', filename='images/favicon.ico') }}">
+
+    <!-- HTML5 shim, for IE6-8 support of HTML5 elements. All other JS at the end of file. -->
+    <!--[if lt IE 9]>
+      <script src="js/html5shiv.js"></script>
+    <![endif]-->
+    <link rel=stylesheet type=text/css href="{{ url_for('static', filename='css/style.css') }}">
   </head>
   <body>
-    <div class=page>
-      <h1><a href="{{ url_for('index') }}">Flaskr</a></h1>
-      <div class=metanav>
-
-        <div>  
-          {% if current_user.is_authenticated() %}
-            {% if current_user and current_user.role == 1%}
-            <a href="{{ url_for('signout') }}">admin</a>  
-            <a href="{{ url_for('post') }}">post</a>  
-            {% endif %}
-            <a href="{{ url_for('tags') }}">tags</a>
-            <a href="{{ url_for('signout') }}">signout</a>
-          {% else %}
-            <a href="{{ url_for('signin') }}">signin</a>
-            <a href="{{ url_for('signup') }}">signup</a>
-          {% endif %}
+    <div id="container">
+      <header>
+        <div id="siteinfo">
+          <h1 id="sitetitle"><a href="{{ url_for('index') }}">Flaskr</a></h1>
+          <div id="sitesetting">
+            <div class="dropdown">
+              <button class="btn btn-primary dropdown-toggle" data-toggle="dropdown">current<span class="caret"></span></button>
+              <span class="dropdown-arrow"></span>
+              <ul class="dropdown-menu">
+                {% if current_user.is_authenticated() %}
+                  {% if current_user and current_user.role == 1%}
+                  <li><a href="{{ url_for('post') }}">admin</a></li>  
+                  <li><a href="{{ url_for('post') }}">post</a> </li> 
+                  {% endif %}
+                  <li><a href="{{ url_for('tags') }}">tags</a></li>
+                  <li><a href="{{ url_for('signout') }}">signout</a></li>
+                  {% else %}
+                  <li><a href="{{ url_for('signin') }}">signin</a></li>
+                  <li><a href="{{ url_for('signup') }}">signup</a></li>
+                {% endif %}
+              </u>
+            </div>
+            <div class="clear"></div>
+          </div>
         </div>
-      </div>
-        {% for message in get_flashed_messages() %}
-            <div class=flash>{{ message }}</div>
-        {% endfor %}
-        {% if categories %}
-         <div id="nav">
-          <ul>
+        <div class="navbar navbar-inverse">
+          <ul class="nav navbar-nav">
             <li><a href="{{ url_for('index') }}">home</a>
-            {% for category in categories %}
+          {% for category in categories %}
             <li><a href="{{ url_for('list', name=category.name) }}">{{ category.name }}</a></li>
-            {% endfor %}
+          {% endfor %}
           </ul>
-        </div> 
-        {% endif %}
-        
+        </div>
 
-        {% block content %}{% endblock %}
+      </header>   
+      {% for message in get_flashed_messages() %}
+          <div class=flash>{{ message }}</div>
+      {% endfor %}
+      {% block content %}{% endblock %}
+
     </div>
+    <script type="text/javascript" src="{{ url_for('static', filename='js/jquery-1.8.3.min.js') }}"></script>
+    <script type="text/javascript" src="{{ url_for('static', filename='js/jquery-ui-1.10.3.custom.min.js') }}"></script>
+    <script type="text/javascript" src="{{ url_for('static', filename='js/bootstrap.min.js') }}"></script>
+    <script type="text/javascript" src="{{ url_for('static', filename='js/bootstrap-select.js') }}"></script>
+    <script type="text/javascript" src="{{ url_for('static', filename='js/bootstrap-switch.js') }}"></script>
+    <script type="text/javascript" src="{{ url_for('static', filename='js/flatui-checkbox.js') }}"></script>
+    <script type="text/javascript" src="{{ url_for('static', filename='js/flatui-radio.js') }}"></script>
+    <script type="text/javascript" src="{{ url_for('static', filename='js/jquery.tagsinput.js') }}"></script>
+    <script type="text/javascript" src="{{ url_for('static', filename='js/jquery.placeholder.js') }}"></script>
   </body>
 </html>

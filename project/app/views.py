@@ -41,31 +41,37 @@ def detail(id):
     post = Post.query.filter_by(id=id).first()
     return render_template('detail.html', categories=categories, post=post)
 
+def __post(form):
+    if form.validate_on_submit():
+        title = form.data['title']
+        body = form.data['body']
+        category = form.data['category']
+        tags = form.data['tag'].split()
+        category = Category.query.filter_by(name=category).first()
+        taglist = []
+        for tag in tags:
+            tagrecord = Tag.query.filter_by(content=tag).first()
+            if not tagrecord:
+                taglist.append(Tag(content=tag))
+            else:
+                taglist.append(tagrecord)
+        return { 'title':title, 'body':body, 'category':category, 'taglist': taglist }
+    else:
+        return None
+
 
 @app.route('/post', methods=['GET', 'POST'])
 @login_required
 def post():
-
     form = PostForm()
     if request.method == 'POST':
-        if form.validate_on_submit():
-            title = form.data['title']
-            body = form.data['body']
-            category = form.data['category']
-            tags = form.data['tag'].split()
-            category = Category.query.filter_by(name=category).first()
-            taglist = []
-            for tag in tags:
-                print tag
-                tagrecord = Tag.query.filter_by(content=tag).first()
-                if not tagrecord:
-                    taglist.append(Tag(content=tag))
-                else:
-                    taglist.append(tagrecord)
-
-            print taglist
+        postdata = __post(form)
+        if postdata:
+            title = postdata['title']
+            body = postdata['body']
+            category = postdata['category']
+            taglist = postdata['taglist']
             try:
-                pass
                 post = Post(title=title, body=body, category=category, user=current_user,tags=taglist)
                 db.session.add(post)
                 db.session.commit()
@@ -74,6 +80,38 @@ def post():
             except Exception, e:
                 flash('something goes wrong')    
     return render_template('post.html', form=form)
+
+@app.route('/post/modify/<postid>', methods=['GET', 'POST'])
+def post_modify(postid):
+
+    form = PostForm()
+    post = Post.query.filter_by(id=postid).first()
+    if request.method == 'POST':
+        postdata = __post(form)
+        if postdata:
+            title = postdata['title']
+            body = postdata['body']
+            category = postdata['category']
+            taglist = postdata['taglist']
+            try:
+                post.title = title
+                post.body = body
+                post.category = category
+                post.taglist = taglist
+                db.session.merge(post)
+                db.session.commit()
+                flash('edit successful')
+                return redirect(url_for('index'))
+            except Exception, e:
+                return flash('something goes wrong')
+
+    form.title.process_data(post.title)
+    form.body.process_data(post.body)
+    form.category.process_data(post.category.name)
+    if post.tags:
+        tagstr = ' '.join([tag.content for tag in post.tags])
+        form.tag.process_data(tagstr)
+    return render_template('post_modify.html', form=form, post=post)
 
 @app.route('/tags')
 def tags():
@@ -121,7 +159,7 @@ def internal_error(error):
 
 @app.route('/account/signup', methods=['GET', 'POST'])
 def signup():
-
+    categories = Category.query.all()
     form = RegisterFrom()
     if request.method == 'POST':
         if form.validate_on_submit():
@@ -136,7 +174,7 @@ def signup():
             except Exception, e:
                 return flash('something goes wrong')
             return redirect(url_for('signin'))
-    return render_template('signup.html', form=form)
+    return render_template('signup.html', form=form, categories=categories)
 
 
 @login_manager.user_loader
@@ -146,6 +184,7 @@ def load_user(userid):
 
 @app.route('/account/signin', methods=['GET', 'POST'])
 def signin():
+    categories = Category.query.all()
     form = LoginForm()
     if request.method == 'POST':
         if form.validate_on_submit():
@@ -162,7 +201,7 @@ def signin():
             else:
                 flash(u'用户名或者密码错误')
 
-    return render_template('signin.html', form=form)
+    return render_template('signin.html', form=form, categories=categories)
 
 
 @app.route('/account/signout')
@@ -171,27 +210,3 @@ def signout():
     logout_user()
     flash('signout successful')
     return redirect('index')
-
-# @app.route('/account/signin', methods=['GET', 'POST'])
-# def signin():
-#     form = LoginForm()
-#     if request.method == 'POST':
-#         if form.validate_on_submit():
-#             nickname = form.data['nickname']
-#             psdmd5 = md5(form.data['password'])
-#             password = psdmd5.hexdigest()
-#             u = User.query.filter_by(nickname=nickname, password=password).first()
-#             if u:
-#                 session['signin'] = True
-#                 flash('signin successful')
-#                 return redirect(url_for('index'))
-#             else:
-#                 flash(u'用户名或者密码错误')
-
-#     return render_template('signin.html', form=form)
-
-# @app.route('/account/signout')
-# def signout():
-#     session.pop('signin', None)
-#     flash('signout successful')
-#     return redirect('index')

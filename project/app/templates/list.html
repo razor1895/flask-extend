@@ -2,32 +2,7 @@
 {% extends "base.html" %}
 
 {% block content %}
-  <h1>{{ category.name }}</h1>
-  <ul class=entries>
-  {% for post in posts.items %}
-    <li>
-      <h2><a href="{{ url_for('detail', id=post.id) }}">{{ post.title }}</a></h2>
-      <span>
-        author:{{ post.user.nickname }}<br />
-        pubdate:{{ post.pub_date }}<br />
-        tags:
-        {% if post.tags %}
-          {% for tag in post.tags %}
-          <em><a href="{{ url_for('post_by_tag', tag=tag.content, tagid=tag.id) }}">{{ tag.content }}</a></em>
-          {% endfor %}
-        {% else %}
-          None
-        {% endif %}
-      </span>
-      <div>
-        {{ post.body|safe }}
-      </div>
-      <a href="{{ url_for('detail', id=post.id) }}">More...</a>
-    </li>
-  {% else %}
-    <li><em>Unbelievable.  No entries here so far</em></li>
-  {% endfor %}
-  </ul>
+  {% include "postlist.html" %}
 
   {% import 'macros.html' as paginate %}
   {{ paginate.render_pagination(posts, 'index') }}

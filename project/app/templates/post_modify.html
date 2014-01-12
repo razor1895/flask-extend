@@ -1,0 +1,24 @@
+<!-- extend base layout -->
+{% extends "base.html" %}
+
+{% block content %}
+  <h2>post</h2>
+  {% if form.errors %}
+    <p class=error><strong>Error:</strong> 
+    {% for key, value in form.errors.items()  %}
+      {{ key }}:{{ value[0] }}<br/>
+    {% endfor %}
+  {% endif %}
+  <form method="POST" action=''>
+
+    {{ form.hidden_tag() }}
+    <p>{{ form.title.label }} {{ form.title(size=20) }}</p>
+    <p>{{ form.body.label }} {{ form.body(rows=5, cols=40) }}</p>
+    <p>{{ form.category.label }} {{ form.category }}</p>
+    <p>{{ form.tag.label }} {{ form.tag }}</p>
+    <input type="submit" value="Post">
+    <input type="reset" value="Reset">
+  </form>
+
+  
+{% endblock %}
