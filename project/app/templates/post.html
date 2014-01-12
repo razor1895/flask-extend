@@ -11,12 +11,12 @@
   {% endif %}
   <form method="POST" action=''>
     {{ form.hidden_tag() }}
-    <p>{{ form.title.label }} {{ form.title(size=20) }}</p>
-    <p>{{ form.body.label }} {{ form.body(rows=5, cols=40) }}</p>
-    <p>{{ form.category.label }} {{ form.category }}</p>
-    <p>{{ form.tag.label }} {{ form.tag }}</p>
-    <input type="submit" value="Post">
-    <input type="reset" value="Reset">
+    <p>{{ form.title.label }} {{ form.title(class="form-control", placeholder="Enter title") }}</p>
+    <p>{{ form.body.label }} {{ form.body(rows=5, cols=40, class="form-control input-lg", placeholder="Large") }}</p>
+    <p>{{ form.category.label }} <br />{{ form.category(class="btn btn-inverse") }}</p>
+    <p>{{ form.tag.label }} {{ form.tag(class="form-control", placeholder="Enter tags") }}</p>
+    <input type="submit" value="Post" class="btn btn-primary" />
+    <input type="reset" value="Reset" class="btn btn-info" />
   </form>
 {% endblock %}
 

@@ -63,6 +63,7 @@ def __post(form):
 @app.route('/post', methods=['GET', 'POST'])
 @login_required
 def post():
+    categories = Category.query.all()
     form = PostForm()
     if request.method == 'POST':
         postdata = __post(form)
@@ -79,11 +80,11 @@ def post():
                 return redirect(url_for('index'))
             except Exception, e:
                 flash('something goes wrong')    
-    return render_template('post.html', form=form)
+    return render_template('post.html', form=form, categories=categories)
 
 @app.route('/post/modify/<postid>', methods=['GET', 'POST'])
 def post_modify(postid):
-
+    categories = Category.query.all()
     form = PostForm()
     post = Post.query.filter_by(id=postid).first()
     if request.method == 'POST':
@@ -111,7 +112,7 @@ def post_modify(postid):
     if post.tags:
         tagstr = ' '.join([tag.content for tag in post.tags])
         form.tag.process_data(tagstr)
-    return render_template('post_modify.html', form=form, post=post)
+    return render_template('post.html', form=form, post=post, categories=categories)
 
 @app.route('/tags')
 def tags():
